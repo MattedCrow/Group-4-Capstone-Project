@@ -57,8 +57,12 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Alphabet\HiraAlphabet.cs" />
+    <Compile Include="Alphabet\JapChar.cs" />
+    <Compile Include="Alphabet\Question.cs" />
     <Compile Include="Core\Command.cs" />
     <Compile Include="FillQuestionsListClass.cs" />
+    <Compile Include="GalleryScreen.cs" />
     <Compile Include="LetterClass.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -92,6 +96,8 @@
     <Compile Include="Core\Text.cs" />
     <Compile Include="Core\Utility.cs" />
     <Compile Include="Screens\WorldMapScreen.cs" />
+    <Compile Include="Stage\StageBuild.cs" />
+    <Compile Include="Stage\StageData.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MonoGame.Framework">

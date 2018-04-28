@@ -30,7 +30,7 @@ namespace concept_0_03
         private Sprite Obstacle;
 
         #region Enemy One Variables
-        private Vector2 enemyOnePosition = new Vector2(300,400);
+        private Vector2 enemyOnePosition = new Vector2(300, 400);
         private Rectangle enemyOneBounds = new Rectangle(150, 250, 200, 200);
         private int enemyMovementLeftRight;
         private int enemyMovementUpDown;
@@ -168,20 +168,20 @@ namespace concept_0_03
                     if (Game1.m_audioState == Game1.AudioState.PLAYING)
                         Game1.currentInstance.Stop();
 
-                    m_ScreenManager.PushScreen(new FightScreen(m_ScreenManager));
+                    m_ScreenManager.PushScreen(new FightScreen(m_ScreenManager, "1-1"));
 
                     fightStarted = false;
                 }
-                
+
             }
-            
+
 
             if (isMusicStopped == true && wasOptionsOpen == true)
             {
                 isMusicStopped = false;
                 wasOptionsOpen = false;
             }
-            
+
             #region Enemy One Movement -- CURRENTLY DISABLED
             /*
             
@@ -308,7 +308,7 @@ namespace concept_0_03
 
         public void Dispose()
         {
-            
+
         }
     }
 }

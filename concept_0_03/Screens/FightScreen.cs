@@ -11,31 +11,35 @@ namespace concept_0_03
 {
     class FightScreen : IGameScreen
     {
-        FillQuestionsListClass temp = new FillQuestionsListClass();
-
         private bool m_exitGame;
         private readonly IGameScreenManager m_ScreenManager;
 
         private bool isMusicOn;
         private bool wasOptionsOpened;
 
+        private Stage.StageData stageData = new Stage.StageData(); //CREATE A NEW STAGEDATA LIST
+
         private List<Component> m_components;
         private SoundEffect click;
 
         #region Question Variables
 
-        private string optionOne = "か";
-        private string optionTwo = "き";
-        private string optionThree = "み";
-        private string optionFour = "く";
-        private string currentWord = "か";
-        private string questionBeginning = "Please translate: ";
-        private string questionWord = "ka";
+        private string optionOne;
+        private string optionTwo;
+        private string optionThree;
+        private string optionFour;
+        private string currentWord;
+        private string questionWord;
+
 
         #endregion
 
         private Text m_questionText;
         private Text m_eHealthText;
+        private Button answerButton1;
+        private Button answerButton2;
+        private Button answerButton3;
+        private Button answerButton4;
         private int enemyHealth = 5;
         private string fullEnemyHealthText;
 
@@ -68,14 +72,45 @@ namespace concept_0_03
         private Timer canAnswerTimer = new Timer();
         private bool canAnswer = false;
 
-        private Sprite Player;
+        private Timer displayDamageImageTimer = new Timer();
 
-        public FightScreen(IGameScreenManager gameScreenManager)
+        private string stageID;
+
+        private Sprite Player;
+        private Sprite Companion;
+
+        private Sprite PlayerDamaged;
+        private Sprite EnemyDamaged;
+        private bool DamageTaken = false;
+
+        private void SetNewQuestion()
+        {
+            Question question = new Question(stageData.CurrentSet);
+
+            questionWord = question.Quest;
+
+            optionOne = question.Ans1;
+            optionTwo = question.Ans2;
+            optionThree = question.Ans3;
+            optionFour = question.Ans4;
+
+            currentWord = question.CorrectAns;
+
+        }
+
+        public FightScreen(IGameScreenManager gameScreenManager, string stage_ID)
         {
             m_ScreenManager = gameScreenManager;
 
+            stageID = stage_ID;
+            stageData.SetStageData(stageID);
+
+            SetNewQuestion();
+
             canAnswerTimer.Interval = 400;
             canAnswerTimer.Start();
+
+            displayDamageImageTimer.Interval = 500;
         }
 
         public FightScreen(IGameScreenManager gameScreenManager, string m_currentWord, string m_questionWord)
@@ -109,6 +144,11 @@ namespace concept_0_03
             Player = new Sprite(Game1.activePlayer_FightTexture)
             {
                 Position = new Vector2(120, 325)
+            };
+
+            Companion = new Sprite(Game1.activeCompanion_FightTexture)
+            {
+                Position = new Vector2(25, 425)
             };
 
             #region Music
@@ -153,7 +193,7 @@ namespace concept_0_03
 
             var questionBackground = new Sprite(content.Load<Texture2D>("textboxes/textbox600x180"))
             {
-                Position = new Vector2(100, 2)
+                Position = new Vector2(100, 32)
             };
 
             #region Enemy Health Rendering
@@ -191,65 +231,80 @@ namespace concept_0_03
             #endregion
 
             #region Question Rendering
-            questionBeginning = "Please translate: " + questionWord;
 
-            Vector2 m_questionPosition = new Vector2(1, 20);
+            Vector2 m_questionPosition = new Vector2(1, 70);
             Color m_questionColor = Color.Black;
 
-            m_questionText = new Text(questionBeginning, m_font, m_questionPosition, m_questionColor);
-            m_questionText.CenterHorizontal(800, 30);
+            m_questionText = new Text(questionWord, m_Japanese, m_questionPosition, m_questionColor);
+            m_questionText.CenterHorizontal(800, 80);
             #endregion
 
             #region Answer Button 1
-            var answerButton1 = new Button(content.Load<Texture2D>("Menu/Red/red_button03"), m_Japanese)
+            answerButton1 = new Button(content.Load<Texture2D>("Menu/Red/red_button03"), m_Japanese)
             {
-                Position = new Vector2(305, 200),
+                Position = new Vector2(305, 230),
                 Text = optionOne,
             };
 
             answerButton1.Click += AnswerButton1_Click;
             #endregion
             #region Answer Button 2
-            var answerButton2 = new Button(content.Load<Texture2D>("Menu/Blue/blue_button03"), m_Japanese)
+            answerButton2 = new Button(content.Load<Texture2D>("Menu/Blue/blue_button03"), m_Japanese)
             {
-                Position = new Vector2(205, 250),
+                Position = new Vector2(205, 280),
                 Text = optionTwo,
             };
 
             answerButton2.Click += AnswerButton2_Click;
             #endregion
             #region Answer Button 3
-            var answerButton3 = new Button(content.Load<Texture2D>("Menu/Blue/Blue_button03"), m_Japanese)
+            answerButton3 = new Button(content.Load<Texture2D>("Menu/Blue/Blue_button03"), m_Japanese)
             {
-                Position = new Vector2(405, 250),
+                Position = new Vector2(405, 280),
                 Text = optionThree,
             };
 
             answerButton3.Click += AnswerButton3_Click;
             #endregion
             #region Answer Button 4
-            var answerButton4 = new Button(content.Load<Texture2D>("Menu/Red/red_button03"), m_Japanese)
+            answerButton4 = new Button(content.Load<Texture2D>("Menu/Red/red_button03"), m_Japanese)
             {
-                Position = new Vector2(305, 300),
+                Position = new Vector2(305, 330),
                 Text = optionFour,
             };
 
             answerButton4.Click += AnswerButton4_Click;
             #endregion
 
+            PlayerDamaged = new Sprite(content.Load<Texture2D>("BattleFX/playerHit_Small"))
+            {
+                Colour = Color.Transparent,
+                Position = new Vector2(60, 270)
+            };
+
+            EnemyDamaged = new Sprite(content.Load<Texture2D>("BattleFX/enemyHit_Small"))
+            {
+                Colour = Color.Transparent,
+                Position = new Vector2(520, 270)
+            };
+
             m_components = new List<Component>()
             {
+
                 screenBackground,
                 questionBackground,
-
-                ground,
 
                 answerButton1,
                 answerButton2,
                 answerButton3,
                 answerButton4,
 
+                ground,
                 Player,
+                Companion,
+
+                PlayerDamaged,
+                EnemyDamaged,
             };
         }
 
@@ -262,11 +317,17 @@ namespace concept_0_03
             if (optionOne == currentWord)
             {
                 enemyHealth -= 1;
+
+                EnemyDamaged.Colour = new Color(255, 255, 255, 255);
             }
             else
             {
                 playerHealth -= 1;
+
+                PlayerDamaged.Colour = new Color(255, 255, 255, 255);
             }
+            SetNewQuestion();
+            DamageTaken = true;
         }
 
         private void Answer02_Pressed()
@@ -276,11 +337,17 @@ namespace concept_0_03
             if (optionTwo == currentWord)
             {
                 enemyHealth -= 1;
+
+                EnemyDamaged.Colour = new Color(255, 255, 255, 255);
             }
             else
             {
                 playerHealth -= 1;
+
+                PlayerDamaged.Colour = new Color(255, 255, 255, 255);
             }
+            SetNewQuestion();
+            DamageTaken = true;
         }
 
         private void Answer03_Pressed()
@@ -290,11 +357,17 @@ namespace concept_0_03
             if (optionThree == currentWord)
             {
                 enemyHealth -= 1;
+
+                EnemyDamaged.Colour = new Color(255, 255, 255, 255);
             }
             else
             {
                 playerHealth -= 1;
+
+                PlayerDamaged.Colour = new Color(255, 255, 255, 255);
             }
+            SetNewQuestion();
+            DamageTaken = true;
         }
 
         private void Answer04_Pressed()
@@ -304,11 +377,17 @@ namespace concept_0_03
             if (optionFour == currentWord)
             {
                 enemyHealth -= 1;
+
+                EnemyDamaged.Colour = new Color(255, 255, 255, 255);
             }
             else
             {
                 playerHealth -= 1;
+
+                PlayerDamaged.Colour = new Color(255, 255, 255, 255);
             }
+            SetNewQuestion();
+            DamageTaken = true;
         }
 
         private void AnswerButton1_Click(object sender, EventArgs e)
@@ -318,11 +397,17 @@ namespace concept_0_03
             if (optionOne == currentWord)
             {
                 enemyHealth -= 1;
+
+                EnemyDamaged.Colour = new Color(255, 255, 255, 255);
             }
             else
             {
                 playerHealth -= 1;
+
+                PlayerDamaged.Colour = new Color(255, 255, 255, 255);
             }
+            SetNewQuestion();
+            DamageTaken = true;
         }
 
         private void AnswerButton2_Click(object sender, EventArgs e)
@@ -332,11 +417,17 @@ namespace concept_0_03
             if (optionTwo == currentWord)
             {
                 enemyHealth -= 1;
+
+                EnemyDamaged.Colour = new Color(255, 255, 255, 255);
             }
             else
             {
                 playerHealth -= 1;
+
+                PlayerDamaged.Colour = new Color(255, 255, 255, 255);
             }
+            SetNewQuestion();
+            DamageTaken = true;
         }
 
         private void AnswerButton3_Click(object sender, EventArgs e)
@@ -346,11 +437,17 @@ namespace concept_0_03
             if (optionThree == currentWord)
             {
                 enemyHealth -= 1;
+
+                EnemyDamaged.Colour = new Color(255, 255, 255, 255);
             }
             else
             {
                 playerHealth -= 1;
+
+                PlayerDamaged.Colour = new Color(255, 255, 255, 255);
             }
+            SetNewQuestion();
+            DamageTaken = true;
         }
 
         private void AnswerButton4_Click(object sender, EventArgs e)
@@ -360,11 +457,17 @@ namespace concept_0_03
             if (optionFour == currentWord)
             {
                 enemyHealth -= 1;
+
+                EnemyDamaged.Colour = new Color(255, 255, 255, 255);
             }
             else
             {
                 playerHealth -= 1;
+
+                PlayerDamaged.Colour = new Color(255, 255, 255, 255);
             }
+            SetNewQuestion();
+            DamageTaken = true;
         }
 
         #endregion
@@ -381,13 +484,18 @@ namespace concept_0_03
 
         public void Update(GameTime gameTime)
         {
+
             foreach (var component in m_components)
                 component.Update(gameTime);
 
             m_eHealthText.Message = "Enemy Health: " + enemyHealth;
             m_pHealthText.Message = "Player Health: " + playerHealth;
-            m_questionText.Message = "Quick, which character is \"" + questionWord  + "\"! ";
-            m_questionText.CenterHorizontal(800, 30);
+            m_questionText.Message = questionWord;
+            answerButton1.Text = optionOne;
+            answerButton2.Text = optionTwo;
+            answerButton3.Text = optionThree;
+            answerButton4.Text = optionFour;
+            m_questionText.CenterHorizontal(800, 50);   
 
             switch (enemyHealth)
             {
@@ -422,6 +530,7 @@ namespace concept_0_03
                     break;
                 case 3:
                     p_healthBarMain.Texture = threeHearts;
+                    
                     break;
                 case 2:
                     p_healthBarMain.Texture = twoHearts;
@@ -441,6 +550,22 @@ namespace concept_0_03
             {
                 canAnswerTimer.Elapsed += CanAnswerTimer_Elapsed;
             }
+
+            if (DamageTaken == true)
+            {
+                displayDamageImageTimer.Start();
+
+                displayDamageImageTimer.Elapsed += DisplayDamageImageTimer_Elapsed;
+            }
+
+        }
+
+        private void DisplayDamageImageTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            PlayerDamaged.Colour = Color.Transparent;
+            EnemyDamaged.Colour = Color.Transparent;
+
+            DamageTaken = false;
         }
 
         private void CanAnswerTimer_Elapsed(object sender, ElapsedEventArgs e)
